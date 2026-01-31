@@ -1,0 +1,2086 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>МЕТРОНОМИКОН</title>
+    <style>
+        * { 
+            margin: 0; padding: 0; box-sizing: border-box; 
+            user-select: none; 
+        }
+        
+        body {
+            background: #000;
+            color: #0f0;
+            font-family: 'Courier New', monospace;
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+            cursor: default !important;
+        }
+        
+        /* Телевизорный шум на 6 секунд при запуске */
+        .tv-startup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #fff;
+            z-index: 10000;
+            opacity: 1;
+            animation: tvStart 2s linear forwards;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            color: #000;
+        }
+        
+        @keyframes tvStart {
+    0% { opacity: 1; background: #fff; }
+    50% { opacity: 0; background: #000; }
+    100% { opacity: 0; background: #000; display: none; }
+}
+        
+        /* Экран загрузки уровня */
+        .level-loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 8000;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: #0f0;
+        }
+        
+        .loading-dots {
+            margin-top: 20px;
+            font-size: 36px;
+            letter-spacing: 10px;
+        }
+        
+        /* Меню старого компьютера */
+        .level-select {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 9000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 40px;
+            padding: 20px;
+            border: 2px solid #0f0;
+            box-shadow: inset 0 0 50px rgba(0, 255, 0, 0.1);
+        }
+        
+        .terminal-header {
+            font-size: 28px;
+            color: #0f0;
+            letter-spacing: 4px;
+            text-shadow: 0 0 10px #0f0;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #0f0;
+            padding-bottom: 10px;
+            width: 80%;
+            text-align: center;
+        }
+        
+        .terminal-text {
+            color: #0f0;
+            font-size: 14px;
+            line-height: 1.6;
+            max-width: 600px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .level-btn {
+            position: relative;
+            background: transparent;
+            border: 1px solid #0f0;
+            color: #0f0;
+            padding: 15px 40px;
+            font-family: 'Courier New', monospace;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 300px;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .level-btn:hover {
+            background: rgba(0, 255, 0, 0.1);
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+        }
+        
+        /* Уровень 1 - стабильный */
+        .level-1 {
+            border-color: #0f0;
+            color: #0f0;
+        }
+        
+        /* Уровень 2 - кровавый */
+        .level-2 {
+            border-color: #f00;
+            color: #f00;
+        }
+        
+        .blood-drip {
+            position: absolute;
+            top: -20px;
+            width: 2px;
+            height: 20px;
+            background: linear-gradient(to bottom, #f00, #800, transparent);
+            opacity: 0;
+        }
+        
+        /* Уровень 3 - помехи */
+        .level-3 {
+            border-color: #0ff;
+            color: #0ff;
+            animation: glitch 0.3s infinite;
+        }
+        
+        @keyframes glitch {
+            0% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+            100% { transform: translate(0); }
+        }
+        
+        /* Главный игровой интерфейс */
+        .main-ui {
+            display: none;
+        }
+        
+        .main-text {
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            font-size: 26px;
+            letter-spacing: 3px;
+            line-height: 1.5;
+            text-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+            transition: all 0.5s;
+        }
+        
+        .sanity-indicator {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: #0f0;
+            font-size: 14px;
+        }
+        
+        .timer {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 28px;
+            color: #0f0;
+            letter-spacing: 4px;
+            font-variant-numeric: tabular-nums;
+            text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+        }
+        
+        .streak-counter {
+            position: absolute;
+            top: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #0f0;
+            font-size: 16px;
+            text-align: center;
+        }
+        
+        .status {
+            position: absolute;
+            bottom: 120px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #0f0;
+            font-size: 14px;
+            text-align: center;
+            width: 100%;
+        }
+        
+        .command {
+            position: fixed;
+            top: 35%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 36px;
+            color: #f00;
+            text-align: center;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 100;
+            font-weight: bold;
+            letter-spacing: 2px;
+            text-shadow: 0 0 20px #f00;
+        }
+        
+        .action-buttons {
+            position: absolute;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 40px;
+        }
+        
+        .action-btn {
+            position: relative;
+            background: rgba(0, 255, 0, 0.05);
+            border: 1px solid #0f0;
+            color: #0f0;
+            padding: 15px 30px;
+            font-family: 'Courier New', monospace;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.3s;
+            min-width: 180px;
+            text-align: center;
+            opacity: 0.3;
+            text-transform: uppercase;
+        }
+        
+        .action-btn:hover:not(:disabled) {
+            background: rgba(0, 255, 0, 0.1);
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+        }
+        
+        .key-hint {
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #060;
+            font-size: 12px;
+        }
+        
+        .static-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" opacity="0.05"><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3"/></filter><rect width="100%" height="100%" filter="url(%23noise)"/></svg>');
+            pointer-events: none;
+            z-index: 800;
+            opacity: 0;
+        }
+        
+        .glow-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at var(--x, 50%) var(--y, 50%), 
+                transparent 0%, 
+                rgba(255, 0, 0, 0.05) 30%,
+                transparent 70%);
+            pointer-events: none;
+            z-index: 700;
+            opacity: 0;
+        }
+        
+        .digital-nightmare {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 600;
+            opacity: 0;
+        }
+        
+        .nightmare-glyph {
+            position: absolute;
+            color: rgba(0, 255, 255, 0.7);
+            font-size: 24px;
+            font-family: 'Segoe UI Symbol', sans-serif;
+            opacity: 0;
+        }
+        
+        .victory-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 10000;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        
+        .victory-text {
+            font-size: 48px;
+            color: #0f0;
+            margin-bottom: 40px;
+            letter-spacing: 5px;
+            opacity: 0;
+        }
+        
+        .restart-btn {
+            background: transparent;
+            border: 1px solid #0f0;
+            color: #0f0;
+            padding: 15px 40px;
+            font-family: 'Courier New', monospace;
+            font-size: 20px;
+            cursor: pointer;
+            margin-top: 30px;
+            opacity: 0;
+            display: none;
+        }
+        
+        .bsod-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #0078d7;
+            color: #fff;
+            font-family: 'Segoe UI', sans-serif;
+            z-index: 20000;
+            display: none;
+            padding: 50px;
+            font-size: 18px;
+            line-height: 1.5;
+        }
+        
+        .bsod-header {
+            font-size: 36px;
+            margin-bottom: 30px;
+            font-weight: bold;
+        }
+        
+        .bsod-qr {
+            position: absolute;
+            bottom: 50px;
+            right: 50px;
+            width: 150px;
+            height: 150px;
+            background: #000;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            text-align: center;
+        }
+        /* ДОБАВЬ СЮДА НОВЫЙ КОД: */
+@keyframes glitch {
+    0% { transform: translate(0) skew(0deg); }
+    10% { transform: translate(-5px, 2px) skew(5deg); }
+    20% { transform: translate(3px, -3px) skew(-3deg); }
+    30% { transform: translate(-2px, 4px) skew(2deg); }
+    40% { transform: translate(4px, -2px) skew(-4deg); }
+    50% { transform: translate(-3px, 3px) skew(3deg); }
+    60% { transform: translate(2px, -4px) skew(-2deg); }
+    70% { transform: translate(-4px, 2px) skew(4deg); }
+    80% { transform: translate(5px, -5px) skew(-5deg); }
+    90% { transform: translate(-2px, 3px) skew(2deg); }
+    100% { transform: translate(0) skew(0deg); }
+}
+
+@keyframes violent-shake {
+    0%, 100% { transform: translateX(0) rotate(0deg); }
+    10% { transform: translateX(-10px) rotate(-1deg); }
+    20% { transform: translateX(8px) rotate(2deg); }
+    30% { transform: translateX(-12px) rotate(-3deg); }
+    40% { transform: translateX(10px) rotate(1deg); }
+    50% { transform: translateX(-8px) rotate(-2deg); }
+    60% { transform: translateX(12px) rotate(3deg); }
+    70% { transform: translateX(-9px) rotate(-1deg); }
+    80% { transform: translateX(11px) rotate(2deg); }
+    90% { transform: translateX(-7px) rotate(-3deg); }
+}
+
+@keyframes epileptic-warning {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+@keyframes color-madness {
+    0% { filter: hue-rotate(0deg) contrast(100%); }
+    25% { filter: hue-rotate(90deg) contrast(200%); }
+    50% { filter: hue-rotate(180deg) contrast(150%); }
+    75% { filter: hue-rotate(270deg) contrast(250%); }
+    100% { filter: hue-rotate(360deg) contrast(100%); }
+}
+
+#cheatScreen {
+    animation: violent-shake 0.3s infinite linear !important;
+    filter: contrast(150%) brightness(120%);
+}
+
+#cheatScreen::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+        linear-gradient(90deg, 
+            transparent 0%, 
+            rgba(255, 0, 0, 0.1) 50%, 
+            transparent 100%);
+    animation: glitch 0.2s infinite, color-madness 2s infinite linear;
+    pointer-events: none;
+    z-index: 100000;
+}
+
+/* Эпилептическое предупреждение (если кому-то станет плохо) */
+.epilepsy-warning {
+    position: fixed !important;
+    top: 10px !important;
+    left: 10px !important;
+    color: #fff !important;
+    background: #f00 !important;
+    padding: 10px !important;
+    font-size: 12px !important;
+    z-index: 100001 !important;
+    animation: epileptic-warning 0.5s infinite !important;
+    display: none;
+    @keyframes staticMove {
+    0% { transform: translate(0, 0); }
+    100% { transform: translate(10px, 10px); }
+}
+}
+    </style>
+</head>
+<body>
+    <!-- 6-секундный запуск телевизора -->
+    <div class="tv-startup">⋮⋮⋮⋮⋮⋮⋮⋮</div>
+    
+    <!-- 5-секундная загрузка уровня -->
+    <div class="level-loading" id="levelLoading">
+        <div>ЗАГРУЗКА СИСТЕМЫ</div>
+        <div class="loading-dots" id="loadingDots">.</div>
+        <div style="margin-top: 30px; font-size: 14px; color: #060;">ПОДГОТОВКА МЕТРОНОМА...</div>
+    </div>
+    
+    <!-- Меню старого компьютера -->
+    <div class="level-select" id="levelSelect">
+        <div class="terminal-header">МЕТРОНОМИКОН v1.0</div>
+        <div class="terminal-text">
+            > СИСТЕМА ДИСТАНЦИОННОЙ СТИМУЛЯЦИИ<br>
+            > ВЫБЕРИТЕ РЕЖИМ ТЕСТИРОВАНИЯ<br>
+            > УПРАВЛЕНИЕ: КЛАВИШИ A, S, D<br>
+            > ESC - АВАРИЙНЫЙ ВЫХОД
+        </div>
+        <button class="level-btn level-1" id="level1">
+            РЕЖИМ 1: БАЗОВЫЙ ТЕСТ
+            <div class="key-hint">[A,S,D - 5 СЕКУНД]</div>
+        </button>
+        <button class="level-btn level-2" id="level2">
+            РЕЖИМ 2: НАГРУЗОЧНЫЙ ТЕСТ
+            <div class="blood-drip" id="bloodDrip"></div>
+            <div class="key-hint">[A,S,D - 3 СЕКУНДЫ]</div>
+        </button>
+        <button class="level-btn level-3" id="level3">
+            РЕЖИМ 3: ЭКСТРЕМАЛЬНЫЙ ТЕСТ
+            <div class="key-hint">[A,S,D - 1 СЕКУНДА]</div>
+        </button>
+        <div class="terminal-text" style="margin-top: 30px; color: #060; font-size: 12px;">
+            > ВСЕ ДАННЫЕ ЗАПИСЫВАЮТСЯ<br>
+            > НЕ РЕКОМЕНДУЕТСЯ ДЛЯ СЛАБОНЕРВНЫХ
+        </div>
+    </div>
+    
+    <!-- Главный игровой интерфейс -->
+    <div class="main-ui" id="mainUI">
+        <div class="sanity-indicator" id="sanityIndicator">РАССУДОК: 100%</div>
+        <div class="timer" id="timer">00:00:00</div>
+        <div class="streak-counter" id="streakCounter">СЕРИЯ: 0</div>
+        
+        <div class="status" id="status">СТАТУС: ОЖИДАНИЕ</div>
+        
+        <div class="main-text" id="mainText">
+            СИСТЕМА МЕТРОНОМИКОН<br>
+            <span style="color:#0a0;font-size:18px">ИНИЦИАЛИЗАЦИЯ...</span>
+        </div>
+        
+        <div class="command" id="command"></div>
+        
+        <div class="action-buttons">
+            <button class="action-btn" id="btnRun">
+                БЕЖАТЬ
+                <div class="key-hint">[КЛАВИША A]</div>
+            </button>
+            <button class="action-btn" id="btnHide">
+                СПРЯТАТЬСЯ
+                <div class="key-hint">[КЛАВИША S]</div>
+            </button>
+            <button class="action-btn" id="btnLook">
+                ОСМОТРЕТЬСЯ
+                <div class="key-hint">[КЛАВИША D]</div>
+            </button>
+        </div>
+    </div>
+    
+    <!-- Визуальные эффекты -->
+    <div class="static-overlay" id="staticOverlay"></div>
+    <div class="glow-overlay" id="glowOverlay"></div>
+    <div class="digital-nightmare" id="digitalNightmare"></div>
+    
+    <!-- Экран победы -->
+    <div class="victory-screen" id="victoryScreen">
+        <div class="victory-text" id="victoryText"></div>
+        <button class="restart-btn" id="restartBtn">ИЛИ НЕТ</button>
+    </div>
+    
+    <!-- Синий экран смерти -->
+    <div class="bsod-screen" id="bsodScreen">
+        <div class="bsod-header">:(</div>
+        <div style="margin-bottom: 20px;">Произошла фатальная ошибка в метрономикон.exe</div>
+        <div>Код ошибки: SYSTEM_SANITY_FAILURE</div>
+        <div>Собранная информация: 100% дамп памяти</div>
+        <div style="margin-top: 30px;">Дополнительная информация:</div>
+        <div>• STOP: 0x0000003B (ANOMALY_CRITICAL)</div>
+        <div>• Время последней синхронизации: никогда</div>
+        <div>• Запуск перезагрузки... 0% завершено</div>
+        <div class="bsod-qr">
+            QR-код для диагностики<br>
+            (не сканировать)
+        </div>
+    </div>
+
+    <!-- Аудио -->
+    <audio id="soundPhase1" loop></audio>
+    <audio id="soundPhase2" loop></audio>
+    <audio id="soundHeartbeat" loop></audio>
+    <audio id="soundTvNoise" loop></audio>
+    <audio id="soundStatic"></audio>
+    <audio id="soundScare"></audio>
+    <audio id="soundVictory"></audio>
+    <audio id="soundMenuHum" loop></audio>
+    <audio id="soundButtonActivate"></audio>
+    <audio id="soundButtonRun"></audio>
+    <audio id="soundButtonHide"></audio>
+    <audio id="soundButtonLook"></audio>
+    <audio id="soundCustomMenu" loop>
+    
+    
+    
+</audio>
+
+    <script>
+        // ========== КОНФИГУРАЦИЯ ==========
+        const CONFIG = {
+            PHRASES_PHASE1: [
+                "БЕГИ...",
+                "СПРЯЧЬСЯ...",
+                "СМОТРИ...",
+                "ОН БЛИЗКО...",
+                "НЕ ОБОРАЧИВАЙСЯ...",
+                "СЛУШАЙ...",
+                "ТИШЕ..."
+            ],
+            
+            PHRASES_PHASE2: [
+                "ПРОШУ ПОМОГИ НАМ",
+                "ПРОШУ УБЕЙ НАС",
+                "ПРОШУ БЕГИ",
+                "ОНИ ТЕБЯ ВИДЯТ",
+                "ПОЗДНО...",
+                "БЕГИ ПРОСТО БЕГИ",
+                "МЫ ВСЕ УМРЁМ ЗДЕСЬ",
+                "ОН В ТВОЕЙ ГОЛОВЕ",
+                "2026 УЖЕ ЗДЕСЬ",
+                "МЕТРОНОМ ЛЖЁТ",
+                "ТЫ НЕ ДОЛЖЕН БЫЛ ЭТО ВИДЕТЬ",
+                "ОНО С ТОБОЙ ВСЕГДА",
+                "ВРЕМЯ ЛЖЁТ ДЛЯ ТЕБЯ",
+                "МЫ ВСЕГДА ЗДЕСЬ БЫЛИ"
+            ],
+            
+            PHRASES_VICTORY: [
+                "НЕВОЗМОЖНО...",
+                "КАК ТЫ СМОГ...",
+                "СИСТЕМА ЛОМАЕТСЯ...",
+                "МЕТРОНОМ ЗАТИХАЕТ...",
+                "ПОБЕДА НЕВЕРОЯТНА..."
+            ],
+            
+            LEVELS: {
+                1: { requiredStreak: 10, sanityDrain: 0.1, phaseChange: 100, reactionTime: 5000 },
+                2: { requiredStreak: 15, sanityDrain: 0.2, phaseChange: 70, reactionTime: 3000 },
+                3: { requiredStreak: 19, sanityDrain: 0.3, phaseChange: 0, reactionTime: 1000 }
+            },
+            
+            COMMAND_INTERVALS: {
+                min: 500,
+                max: 5000
+            }
+        };
+        
+        // ========== СОСТОЯНИЕ ИГРЫ ==========
+        const STATE = {
+            
+            level: null,
+            phase: 1,
+            gameActive: false,
+            
+            sanity: 100,
+            currentStreak: 0,
+            requiredStreak: 10,
+            correctInRow: 0,
+            
+            realTime: 0,
+            displayedTime: 0,
+            timeAnomaly: 0,
+            lastCommandTime: 0,
+            
+            currentCommand: null,
+            correctButton: null,
+            commandTimeout: null,
+            
+            soundsEnabled: false,
+            audioContext: null,
+            
+            buttonBehavior: {
+                movement: { x: 0, y: 0, range: 50 },
+                blood: false,
+                static: false
+            }
+        };
+        
+        // ========== ИНИЦИАЛИЗАЦИЯ ==========
+        function init() {
+            console.log('МЕТРОНОМИКОН: Система загружена');
+            
+            // Курсор виден
+            document.body.style.cursor = 'default';
+            
+            // Ждём окончания телевизионного старта
+            setTimeout(() => {
+                document.querySelector('.tv-startup').style.display = 'none';
+                setupLevelSelect();
+                startMenuHum(); // Звук гудения в меню
+            }, 6000);
+            // Настройка аудио
+            setupAudio();
+            
+            // Настройка клавиш
+            setupKeyboardControls();
+                console.log('%c⚠ МЕТРОНОМИКОН: СИСТЕМА СТИМУЛЯЦИИ ⚠', 'color: #f00; font-size: 16px;');
+    console.log('Управление: A, S, D для выбора действий');
+    console.log('Уровень 1: 5 секунд на ответ');
+    console.log('Уровень 2: 3 секунды на ответ');
+    console.log('Уровень 3: 1 секунда на ответ');
+    
+    // Добавляем отслеживание читерства
+    checkForCheatProgress();
+        }
+        
+        // ========== УПРАВЛЕНИЕ КЛАВИШАМИ ==========
+        function setupKeyboardControls() {
+            document.addEventListener('keydown', handleKeyPress);
+        }
+        
+        function handleKeyPress(e) {
+            if (!STATE.gameActive || !STATE.currentCommand) return;
+            
+            const key = e.key.toLowerCase();
+            let buttonCommand = null;
+            
+            switch(key) {
+                case 'a':
+                    buttonCommand = 'БЕГАТЬ';
+                    playButtonSound('run');
+                    break;
+                case 's':
+                    buttonCommand = 'СПРЯТАТЬСЯ';
+                    playButtonSound('hide');
+                    break;
+                case 'd':
+                    buttonCommand = 'ОСМОТРЕТЬСЯ';
+                    playButtonSound('look');
+                    break;
+                case 'escape':
+                    if (STATE.gameActive) {
+                        gameOver(false);
+                    }
+                    break;
+            }
+            
+            if (buttonCommand) {
+                handleButtonClick(buttonCommand);
+            }
+        }
+        
+        // ========== МЕНЮ ВЫБОРА УРОВНЯ ==========
+        function setupLevelSelect() {
+            // Уровень 1
+            document.getElementById('level1').onclick = () => {
+                playButtonSound('activate');
+                startLevel(1);
+            };
+            
+            // Уровень 2 - кровавый
+            const level2Btn = document.getElementById('level2');
+            const bloodDrip = document.getElementById('bloodDrip');
+            
+            setInterval(() => {
+                if (STATE.level === null) {
+                    bloodDrip.style.opacity = '0.7';
+                    bloodDrip.style.left = Math.random() * 280 + 'px';
+                    setTimeout(() => {
+                        bloodDrip.style.opacity = '0';
+                    }, 1000);
+                }
+            }, 3000);
+            
+            level2Btn.onclick = () => {
+                playButtonSound('activate');
+                startLevel(2);
+            };
+            
+            // Уровень 3 - помехи
+            const level3Btn = document.getElementById('level3');
+            
+            level3Btn.onmouseenter = () => {
+                document.getElementById('staticOverlay').style.opacity = '0.3';
+                playSound('static');
+            };
+            
+            level3Btn.onmouseleave = () => {
+                document.getElementById('staticOverlay').style.opacity = '0';
+            };
+            
+            level3Btn.onclick = () => {
+                playButtonSound('activate');
+                startLevel(3);
+            };
+        }
+        
+        function startLevel(level) {
+            STATE.level = level;
+            STATE.requiredStreak = CONFIG.LEVELS[level].requiredStreak;
+            STATE.sanity = 100;
+            STATE.currentStreak = 0;
+            STATE.correctInRow = 0;
+            
+            // Показываем экран загрузки
+            document.getElementById('levelSelect').style.display = 'none';
+            document.getElementById('levelLoading').style.display = 'flex';
+            
+            // Останавливаем звук меню
+            stopMenuHum();
+            
+            // Анимация точек загрузки
+            let dots = 1;
+            const dotsInterval = setInterval(() => {
+                document.getElementById('loadingDots').textContent = '.'.repeat(dots);
+                dots = dots % 3 + 1;
+            }, 500);
+            
+            // Загрузка 5 секунд
+            setTimeout(() => {
+                clearInterval(dotsInterval);
+                document.getElementById('levelLoading').style.display = 'none';
+                
+                // Настройка поведения кнопок
+                setupButtonBehavior(level);
+                
+                // Переключаем на игровой интерфейс
+                document.getElementById('mainUI').style.display = 'block';
+                
+                // Запускаем игру
+                STATE.gameActive = true;
+                startGameLoop();
+                startCommandCycle();
+                
+                // Включаем звук
+                enableAudio();
+                
+                console.log(`Уровень ${level} начат. Время реакции: ${CONFIG.LEVELS[level].reactionTime}мс`);
+            }, 5000);
+        }
+        
+        // ========== ЗВУКИ КНОПОК ==========
+        function playButtonSound(type) {
+            if (!STATE.soundsEnabled) return;
+            
+            const oscillator = STATE.audioContext.createOscillator();
+            const gainNode = STATE.audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(STATE.audioContext.destination);
+            
+            switch(type) {
+                case 'activate':
+                    oscillator.type = 'sine';
+                    oscillator.frequency.value = 800;
+                    gainNode.gain.value = 0.1;
+                    oscillator.start();
+                    oscillator.stop(STATE.audioContext.currentTime + 0.1);
+                    break;
+                    
+                case 'run':
+                    oscillator.type = 'sawtooth';
+                    oscillator.frequency.value = 400;
+                    gainNode.gain.value = 0.15;
+                    oscillator.start();
+                    oscillator.stop(STATE.audioContext.currentTime + 0.2);
+                    break;
+                    
+                case 'hide':
+                    oscillator.type = 'triangle';
+                    oscillator.frequency.value = 300;
+                    gainNode.gain.value = 0.15;
+                    oscillator.start();
+                    oscillator.stop(STATE.audioContext.currentTime + 0.2);
+                    break;
+                    
+                case 'look':
+                    oscillator.type = 'square';
+                    oscillator.frequency.value = 500;
+                    gainNode.gain.value = 0.15;
+                    oscillator.start();
+                    oscillator.stop(STATE.audioContext.currentTime + 0.2);
+                    break;
+            }
+        }
+        
+        // ========== ЗВУК ГУДЕНИЯ В МЕНЮ ==========
+        function startMenuHum() {
+    console.log('Запуск музыки меню...');
+    
+    const menuAudio = document.getElementById('soundMenuHum');
+    if (!menuAudio) {
+        console.error('ОШИБКА: Не найден тег <audio id="soundMenuHum">');
+        return;
+    }
+    
+    menuAudio.src = 'sounds/eas_alert.mp3'; // ТВОЙ ФАЙЛ
+    menuAudio.volume = 1;
+    menuAudio.loop = true;
+    
+    menuAudio.play().catch(e => {
+        console.log('Ждём клика для запуска музыки...');
+        document.body.addEventListener('click', function() {
+            menuAudio.play();
+        }, { once: true });
+    });
+}
+        
+        function stopMenuHum() {
+            if (STATE.menuHum && STATE.menuHum.oscillator) {
+                STATE.menuHum.oscillator.stop();
+            }
+        }
+        
+        // ========== ЗАПУСК ==========
+        window.onload = init;
+        
+        console.log('%c⚠ МЕТРОНОМИКОН: СИСТЕМА СТИМУЛЯЦИИ ⚠', 'color: #f00; font-size: 16px;');
+        console.log('Управление: A, S, D для выбора действий');
+        console.log('Уровень 1: 5 секунд на ответ');
+        console.log('Уровень 2: 3 секунды на ответ');
+        console.log('Уровень 3: 1 секунда на ответ');
+  // ========== ЗАЩИТА ОТ ЧИТЕРОВ ==========
+let cheatCounter = 0;
+let cheatMode = false;
+
+function checkForCheatProgress() {
+    // Проверяем каждую секунду
+    setInterval(() => {
+        const progress = (STATE.correctInRow / STATE.requiredStreak) * 100;
+        
+        if (progress > 100 && !cheatMode) {
+            // Обнаружен баг с процентами!
+            cheatCounter++;
+            
+            if (cheatCounter >= 3) { // Если 3 раза подряд больше 100%
+                setTimeout(() => {
+                    activateCheatMode();
+                }, 1000);
+            }
+            
+            // Случайный глитч-эффект при превышении 100%
+            if (Math.random() > 0.7) {
+                document.body.style.backgroundColor = '#100';
+                setTimeout(() => {
+                    document.body.style.backgroundColor = '#000';
+                }, 100);
+                
+                // Случайный звук
+                if (STATE.soundsEnabled) {
+                    playCheatSound();
+                }
+            }
+        } else {
+            cheatCounter = Math.max(0, cheatCounter - 0.5);
+        }
+    }, 1000);
+}
+
+function playCheatSound() {
+    if (!STATE.audioContext) return;
+    
+    // Создаём страшный звук для каждой буквы
+    const oscillator = STATE.audioContext.createOscillator();
+    const gainNode = STATE.audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(STATE.audioContext.destination);
+    
+    // Случайный страшный звук
+    const types = ['sawtooth', 'square', 'triangle'];
+    oscillator.type = types[Math.floor(Math.random() * types.length)];
+    oscillator.frequency.value = 50 + Math.random() * 1000;
+    
+    gainNode.gain.value = 0.3;
+    gainNode.gain.exponentialRampToValueAtTime(0.001, STATE.audioContext.currentTime + 0.5);
+    
+    oscillator.start();
+    oscillator.stop(STATE.audioContext.currentTime + 0.5);
+    
+    // Добавляем случайные щелчки
+    if (Math.random() > 0.5) {
+        setTimeout(() => {
+            const click = STATE.audioContext.createOscillator();
+            const clickGain = STATE.audioContext.createGain();
+            
+            click.connect(clickGain);
+            clickGain.connect(STATE.audioContext.destination);
+            
+            click.type = 'square';
+            click.frequency.value = 100 + Math.random() * 900;
+            clickGain.gain.value = 0.1;
+            clickGain.gain.exponentialRampToValueAtTime(0.001, STATE.audioContext.currentTime + 0.1);
+            
+            click.start();
+            click.stop(STATE.audioContext.currentTime + 0.1);
+        }, 100);
+    }
+}
+    </script>
+    
+    <script>
+        
+    // ========== НАСТРОЙКА ПОВЕДЕНИЯ КНОПОК ==========
+function setupButtonBehavior(level) {
+    const buttons = ['btnRun', 'btnHide', 'btnLook'];
+    
+    switch(level) {
+        case 1:
+            STATE.buttonBehavior.movement.range = 0;
+            STATE.buttonBehavior.blood = false;
+            STATE.buttonBehavior.static = false;
+            break;
+            
+        case 2:
+            STATE.buttonBehavior.movement.range = 25;
+            STATE.buttonBehavior.blood = true;
+            STATE.buttonBehavior.static = false;
+            
+            buttons.forEach(id => {
+                const btn = document.getElementById(id);
+                btn.onmouseenter = (e) => {
+                    const rect = btn.getBoundingClientRect();
+                    const x = rect.left + rect.width / 2;
+                    const y = rect.top + rect.height / 2;
+                    
+                    const glow = document.getElementById('glowOverlay');
+                    glow.style.setProperty('--x', x + 'px');
+                    glow.style.setProperty('--y', y + 'px');
+                    glow.style.opacity = '0.5';
+                };
+                
+                btn.onmouseleave = () => {
+                    document.getElementById('glowOverlay').style.opacity = '0';
+                };
+            });
+            break;
+            
+        case 3:
+            STATE.buttonBehavior.movement.range = 10;
+            STATE.buttonBehavior.blood = false;
+            STATE.buttonBehavior.static = true;
+            
+            buttons.forEach(id => {
+                const btn = document.getElementById(id);
+                btn.onmouseenter = () => {
+                    document.getElementById('staticOverlay').style.opacity = '0.8';
+                    playSound('static');
+                };
+                
+                btn.onmouseleave = () => {
+                    document.getElementById('staticOverlay').style.opacity = '0';
+                };
+            });
+            
+            startDigitalNightmare();
+            break;
+    }
+    
+    if (STATE.buttonBehavior.movement.range > 0) {
+        setInterval(moveButtons, 100);
+    }
+}
+
+function moveButtons() {
+    const buttons = ['btnRun', 'btnHide', 'btnLook'];
+    const range = STATE.buttonBehavior.movement.range;
+    
+    buttons.forEach(id => {
+        const btn = document.getElementById(id);
+        const currentX = parseFloat(btn.style.left || 0);
+        const currentY = parseFloat(btn.style.top || 0);
+        
+        const newX = currentX + (Math.random() - 0.5) * range;
+        const newY = currentY + (Math.random() - 0.5) * range;
+        
+        btn.style.position = 'relative';
+        btn.style.left = newX + 'px';
+        btn.style.top = newY + 'px';
+    });
+}
+
+function startDigitalNightmare() {
+    const container = document.getElementById('digitalNightmare');
+    container.style.opacity = '0.3';
+    
+    setInterval(() => {
+        const glyph = document.createElement('div');
+        glyph.className = 'nightmare-glyph';
+        glyph.textContent = 'ꖷꖸꖶꖵꖴꖳꖲꖱꖰꖯꖮꖭ'[Math.floor(Math.random() * 12)];
+        glyph.style.left = Math.random() * 100 + '%';
+        glyph.style.top = Math.random() * 100 + '%';
+        glyph.style.fontSize = (12 + Math.random() * 16) + 'px';
+        
+        container.appendChild(glyph);
+        
+        setTimeout(() => {
+            glyph.style.opacity = '0.7';
+            glyph.style.transform = 'translateY(-10px)';
+        }, 10);
+        
+        setTimeout(() => {
+            glyph.style.opacity = '0';
+            setTimeout(() => {
+                if (glyph.parentNode) glyph.parentNode.removeChild(glyph);
+            }, 1000);
+        }, 2000);
+    }, 500);
+}
+
+// ========== ИГРОВОЙ ПРОЦЕСС ==========
+function startGameLoop() {
+    setInterval(() => {
+        STATE.realTime++;
+        
+        if (STATE.level === 3 && STATE.phase === 2) {
+            STATE.displayedTime += (Math.random() - 0.5) * 2;
+        } else {
+            STATE.displayedTime = STATE.realTime;
+        }
+        
+        updateTimer();
+        
+        STATE.sanity -= CONFIG.LEVELS[STATE.level].sanityDrain;
+        if (STATE.sanity < 0) STATE.sanity = 0;
+        
+        const newPhase = (STATE.sanity <= CONFIG.LEVELS[STATE.level].phaseChange) ? 2 : 1;
+        if (newPhase !== STATE.phase) {
+            STATE.phase = newPhase;
+            onPhaseChange();
+        }
+        
+        updateInterface();
+        
+        if (STATE.sanity <= 0) {
+            gameOver(false);
+        }
+        
+        if (STATE.correctInRow >= STATE.requiredStreak) {
+            gameOver(true);
+        }
+    }, 1000);
+}
+
+function startCommandCycle() {
+    function issueCommand() {
+        if (!STATE.gameActive) return;
+        
+        if (STATE.commandTimeout) {
+            clearTimeout(STATE.commandTimeout);
+            STATE.currentCommand = null;
+            document.getElementById('command').style.opacity = '0';
+        }
+        
+        const commands = ['БЕГАТЬ', 'СПРЯТАТЬСЯ', 'ОСМОТРЕТЬСЯ'];
+        STATE.currentCommand = commands[Math.floor(Math.random() * 3)];
+        STATE.correctButton = STATE.currentCommand;
+        
+        const commandEl = document.getElementById('command');
+        commandEl.textContent = STATE.currentCommand;
+        commandEl.style.color = '#f00';
+        commandEl.style.opacity = '1';
+        
+        if (STATE.level === 3 && STATE.correctInRow >= 19) {
+            commandEl.style.fontSize = '72px';
+            commandEl.style.color = '#f00';
+            commandEl.style.textShadow = '0 0 30px #f00';
+            
+            let counter = 0;
+            const rapidChange = setInterval(() => {
+                if (counter++ > 10) {
+                    clearInterval(rapidChange);
+                    return;
+                }
+                
+                commandEl.textContent = commands[Math.floor(Math.random() * 3)];
+                commandEl.style.opacity = '1';
+                
+                setTimeout(() => {
+                    commandEl.style.opacity = '0.3';
+                }, 50);
+            }, 100);
+            
+            setTimeout(() => {
+                commandEl.textContent = STATE.currentCommand;
+                commandEl.style.opacity = '1';
+            }, 1000);
+        }
+        
+        setTimeout(() => {
+            commandEl.style.opacity = '0';
+        }, 100);
+        
+        document.getElementById('status').textContent = 'СТАТУС: АКТИВЕН';
+        document.getElementById('status').style.color = '#f00';
+        
+        enableButtons();
+        
+        // ВРЕМЯ РЕАКЦИИ ПО УРОВНЯМ: 5с/3с/1с
+        STATE.commandTimeout = setTimeout(() => {
+            commandFailed();
+        }, CONFIG.LEVELS[STATE.level].reactionTime);
+        
+        const nextDelay = CONFIG.COMMAND_INTERVALS.min + 
+            Math.random() * (CONFIG.COMMAND_INTERVALS.max - CONFIG.COMMAND_INTERVALS.min);
+        
+        setTimeout(issueCommand, nextDelay);
+    }
+    
+    setTimeout(issueCommand, 2000);
+}
+
+function enableButtons() {
+    const buttons = [
+        { id: 'btnRun', command: 'БЕГАТЬ' },
+        { id: 'btnHide', command: 'СПРЯТАТЬСЯ' },
+        { id: 'btnLook', command: 'ОСМОТРЕТЬСЯ' }
+    ];
+    
+    playButtonSound('activate'); // ЗВУК АКТИВАЦИИ КНОПКИ
+    
+    if (STATE.level === 3) {
+        buttons.forEach(btn => {
+            const element = document.getElementById(btn.id);
+            element.disabled = false;
+            element.style.opacity = '1';
+            element.onclick = () => handleButtonClick(btn.command);
+        });
+        return;
+           // Проверка на читерство (клики вне активной фазы)
+    if (STATE.currentCommand === null) {
+        triggerCheaterMode();
+        return;
+    }
+    
+    // Остальной код функции остается без изменений...
+    if (STATE.commandTimeout) {
+        clearTimeout(STATE.commandTimeout);
+        STATE.commandTimeout = null;
+    }
+    }
+    
+    buttons.forEach(btn => {
+        const element = document.getElementById(btn.id);
+        
+        if (btn.command === STATE.correctButton) {
+            element.disabled = false;
+            element.style.opacity = '1';
+            element.style.borderColor = '#0f0';
+            element.style.color = '#0f0';
+            element.onclick = () => handleButtonClick(btn.command);
+        } else {
+            element.disabled = true;
+            element.style.opacity = '0.3';
+            element.style.borderColor = '#0f0';
+            element.style.color = '#0f0';
+            element.onclick = null;
+        }
+    });
+    
+    if (STATE.level === 2 && STATE.correctInRow >= STATE.requiredStreak - 3) {
+        setTimeout(() => {
+            const wrongButtons = buttons.filter(b => b.command !== STATE.correctButton);
+            STATE.correctButton = wrongButtons[Math.floor(Math.random() * wrongButtons.length)].command;
+            
+            buttons.forEach(btn => {
+                const element = document.getElementById(btn.id);
+                
+                if (btn.command === STATE.correctButton) {
+                    element.disabled = false;
+                    element.style.opacity = '1';
+                    element.style.borderColor = '#0f0';
+                    element.style.color = '#0f0';
+                } else {
+                    element.disabled = true;
+                    element.style.opacity = '0.3';
+                }
+            });
+            
+            const commandEl = document.getElementById('command');
+            commandEl.style.opacity = '0.5';
+            setTimeout(() => {
+                commandEl.style.opacity = '1';
+            }, 200);
+        }, 300);
+    }
+}
+
+function handleButtonClick(command) {
+    if (!STATE.gameActive) return;
+    
+    if (STATE.commandTimeout) {
+        clearTimeout(STATE.commandTimeout);
+        STATE.commandTimeout = null;
+    }
+    
+    if (command === STATE.correctButton) {
+        STATE.correctInRow++;
+        STATE.currentStreak++;
+        
+        const sanityGain = 5 + (STATE.currentStreak * 0.5);
+        STATE.sanity = Math.min(100, STATE.sanity + sanityGain);
+        
+        document.getElementById('streakCounter').textContent = `СЕРИЯ: ${STATE.currentStreak}`;
+        document.getElementById('streakCounter').style.color = '#0f0';
+        
+        document.getElementById('status').textContent = 'СТАТУС: КОРРЕКТНО';
+        document.getElementById('status').style.color = '#0f0';
+        
+        playSound('static');
+        
+    } else {
+        STATE.currentStreak = 0;
+        
+        const sanityLoss = 10 - (STATE.correctInRow * 0.3);
+        STATE.sanity = Math.max(0, STATE.sanity - sanityLoss);
+        
+        document.getElementById('streakCounter').textContent = `СЕРИЯ: 0`;
+        document.getElementById('streakCounter').style.color = '#f00';
+        
+        document.getElementById('status').textContent = 'СТАТУС: ОШИБКА';
+        document.getElementById('status').style.color = '#f00';
+        
+        playSound('glitch');
+        
+        if (STATE.level === 3) {
+            document.getElementById('staticOverlay').style.opacity = '0.6';
+            setTimeout(() => {
+                document.getElementById('staticOverlay').style.opacity = '0.3';
+            }, 500);
+        }
+    }
+    
+    disableButtons();
+    
+    setTimeout(() => {
+        document.getElementById('status').textContent = 'СТАТУС: ОЖИДАНИЕ';
+        document.getElementById('status').style.color = '#0f0';
+    }, 1000);
+}
+
+function commandFailed() {
+    STATE.currentStreak = 0;
+    STATE.sanity -= 8;
+    
+    document.getElementById('streakCounter').textContent = `СЕРИЯ: 0`;
+    document.getElementById('streakCounter').style.color = '#f00';
+    
+    document.getElementById('status').textContent = 'СТАТУС: ПРОМЕДЛЕНИЕ';
+    document.getElementById('status').style.color = '#f00';
+    
+    disableButtons();
+    playSound('glitch');
+}
+
+function disableButtons() {
+    ['btnRun', 'btnHide', 'btnLook'].forEach(id => {
+        const btn = document.getElementById(id);
+        btn.disabled = true;
+        btn.style.opacity = '0.3';
+        btn.style.borderColor = '#0f0';
+        btn.style.color = '#0f0';
+    });
+}
+
+function onPhaseChange() {
+    console.log(`Смена фазы: ${STATE.phase}`);
+    
+    updateAudioForPhase();
+    
+    const phrase = STATE.phase === 1 
+        ? CONFIG.PHRASES_PHASE1[Math.floor(Math.random() * CONFIG.PHRASES_PHASE1.length)]
+        : CONFIG.PHRASES_PHASE2[Math.floor(Math.random() * CONFIG.PHRASES_PHASE2.length)];
+    
+    document.getElementById('mainText').innerHTML = `МЕТРОНОМИКОН<br><span style="color:#${STATE.phase === 1 ? '0a0' : 'f00'};font-size:18px">${phrase}</span>`;
+    
+    if (STATE.phase === 2) {
+        if (STATE.level === 3) {
+            document.getElementById('digitalNightmare').style.opacity = '0.6';
+        }
+        
+        if (STATE.level === 3) {
+            setInterval(() => {
+                STATE.displayedTime += (Math.random() - 0.5) * 0.5;
+            }, 10);
+        }
+    }
+}
+
+// ========== КОНЕЦ ИГРЫ ==========
+function gameOver(victory) {
+    STATE.gameActive = false;
+    
+    if (victory) {
+        showVictoryScreen();
+    } else {
+        showDeathScreen();
+    }
+}
+function showVictoryScreen() {
+    stopAllSounds();
+    
+    const victoryScreen = document.getElementById('victoryScreen');
+    const victoryText = document.getElementById('victoryText');
+    const restartBtn = document.getElementById('restartBtn');
+    
+    // Настройка экрана победы с затемнением
+    victoryScreen.style.display = 'flex';
+    victoryScreen.style.backgroundColor = 'rgba(0, 0, 0, 0)'; // Начинаем с прозрачного
+    victoryScreen.style.transition = 'background-color 3s ease-in-out';
+    
+    // Медленно затемняем фон
+    setTimeout(() => {
+        victoryScreen.style.backgroundColor = 'rgba(0, 0, 0, 0.99)';
+    }, 100);
+    
+    // Текст появляется сразу
+    setTimeout(() => {
+        victoryText.textContent = 'МЕТРОНОМ УСПЕШНО ОТКЛЮЧЕН';
+        victoryText.style.opacity = '1';
+        victoryText.style.transition = 'opacity 2s ease-in';
+        victoryText.style.transform = 'translateY(0)'; // Убираем поднятие
+        
+        // Через 5 секунд - медленное появление кнопки
+        setTimeout(() => {
+            restartBtn.style.display = 'block';
+            restartBtn.style.opacity = '0';
+            restartBtn.style.color = 'rgba(0, 255, 0, 0)'; // Начинаем с прозрачного текста
+            restartBtn.style.borderColor = 'rgba(0, 255, 0, 0)'; // Начинаем с прозрачной рамки
+            restartBtn.style.transition = 'opacity 3s ease-in, color 3s ease-in, border-color 3s ease-in';
+            
+            // Медленное проявление кнопки до максимальной яркости
+            setTimeout(() => {
+                restartBtn.style.opacity = '1';
+                restartBtn.style.color = '#0f0'; // Постепенно к ярко-зелёному
+                restartBtn.style.borderColor = '#0f0'; // Постепенно к яркой рамке
+                
+                // Дополнительный эффект: медленное появление тени
+                restartBtn.style.boxShadow = '0 0 0px rgba(0, 255, 0, 0)';
+                setTimeout(() => {
+                    restartBtn.style.boxShadow = '0 0 20px rgba(0, 255, 0, 0.7)';
+                    restartBtn.style.transition += ', box-shadow 2s ease-in';
+                }, 1000);
+                
+                // Эффект пульсации после полного появления
+                setTimeout(() => {
+                    setInterval(() => {
+                        restartBtn.style.boxShadow = '0 0 25px rgba(0, 255, 0, 0.9)';
+                        setTimeout(() => {
+                            restartBtn.style.boxShadow = '0 0 15px rgba(0, 255, 0, 0.5)';
+                        }, 800);
+                    }, 1600);
+                }, 3000); // Начинаем пульсацию через 3 секунды после появления
+                
+            }, 100); // Небольшая задержка перед началом анимации
+            
+        }, 5000); // Ждём 5 секунд после текста
+    }, 1000); // Ждём 1 секунду после показа экрана
+    
+    playSound('victory');
+    document.body.style.cursor = 'none';
+    
+    restartBtn.onclick = restartGame;
+}
+function restartGame() {
+    location.reload();
+}
+function showDeathScreen() {
+    const bsod = document.getElementById('bsodScreen');
+    bsod.style.display = 'block';
+    
+    playSound('scare');
+    
+    setTimeout(() => {
+        const audio = document.getElementById('soundScare');
+        audio.loop = true;
+        audio.currentTime = Math.max(0, audio.duration - 0.1);
+        
+        let layers = 0;
+        const addBlackLayer = setInterval(() => {
+            if (layers >= 10) {
+                clearInterval(addBlackLayer);
+                return;
+            }
+            
+            const layer = document.createElement('div');
+            layer.style.position = 'fixed';
+            layer.style.top = '0';
+            layer.style.left = '0';
+            layer.style.width = '100%';
+            layer.style.height = '100%';
+            layer.style.backgroundColor = '#000';
+            layer.style.zIndex = 20001 + layers;
+            layer.style.opacity = '0.1';
+            layer.style.animation = `slideDown ${1 + layers * 0.2}s linear forwards`;
+            
+            document.body.appendChild(layer);
+            layers++;
+        }, 500);
+        
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideDown {
+                0% { transform: translateY(-100%); }
+                100% { transform: translateY(0); }
+            }
+        `;
+        document.head.appendChild(style);
+        
+    }, 5000);
+}
+
+// ========== АУДИО ==========
+function setupAudio() {
+    document.body.addEventListener('click', () => {
+        if (!STATE.soundsEnabled) {
+            enableAudio();
+        }
+    }, { once: true });
+    
+    setTimeout(() => {
+        if (!STATE.soundsEnabled && STATE.gameActive) {
+            enableAudio();
+        }
+    }, 3000);
+}
+
+function enableAudio() {
+    try {
+        STATE.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        STATE.soundsEnabled = true;
+        
+        startPhase1Sound();
+        startHeartbeat();
+        startTvNoise();
+        
+    } catch(e) {
+        console.log('Аудио недоступно:', e);
+    }
+}
+
+function startPhase1Sound() {
+    const oscillator = STATE.audioContext.createOscillator();
+    const gainNode = STATE.audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(STATE.audioContext.destination);
+    
+    oscillator.type = 'sine';
+    oscillator.frequency.value = 80;
+    gainNode.gain.value = 0.1;
+    
+    oscillator.start();
+    
+    STATE.soundPhase1 = { oscillator, gainNode };
+}
+
+function startPhase2Sound() {
+    const oscillator = STATE.audioContext.createOscillator();
+    const gainNode = STATE.audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(STATE.audioContext.destination);
+    
+    oscillator.type = 'square';
+    oscillator.frequency.value = 40;
+    gainNode.gain.value = 0.15;
+    
+    oscillator.start();
+    
+    setInterval(() => {
+        oscillator.frequency.value = 30 + Math.random() * 50;
+    }, 3000);
+    
+    STATE.soundPhase2 = { oscillator, gainNode };
+}
+
+function startHeartbeat() {
+    const oscillator = STATE.audioContext.createOscillator();
+    const gainNode = STATE.audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(STATE.audioContext.destination);
+    
+    oscillator.type = 'sine';
+    oscillator.frequency.value = 100;
+    
+    let heartbeatInterval;
+    
+    function updateHeartbeat() {
+        const rate = 60 + (100 - STATE.sanity);
+        const interval = 60000 / rate;
+        
+        if (heartbeatInterval) clearInterval(heartbeatInterval);
+        
+        heartbeatInterval = setInterval(() => {
+            gainNode.gain.value = 0.08;
+            setTimeout(() => {
+                gainNode.gain.value = 0;
+            }, 100);
+        }, interval);
+    }
+    
+    oscillator.start();
+    updateHeartbeat();
+    
+    setInterval(updateHeartbeat, 2000);
+}
+
+function startTvNoise() {
+    const bufferSize = STATE.audioContext.sampleRate * 2;
+    const buffer = STATE.audioContext.createBuffer(1, bufferSize, STATE.audioContext.sampleRate);
+    const output = buffer.getChannelData(0);
+    
+    for (let i = 0; i < bufferSize; i++) {
+        output[i] = Math.random() * 2 - 1;
+    }
+    
+    const noiseSource = STATE.audioContext.createBufferSource();
+    const gainNode = STATE.audioContext.createGain();
+    
+    noiseSource.buffer = buffer;
+    noiseSource.loop = true;
+    noiseSource.connect(gainNode);
+    gainNode.connect(STATE.audioContext.destination);
+    
+    gainNode.gain.value = 0.05;
+    noiseSource.start();
+}
+
+function updateAudioForPhase() {
+    if (!STATE.soundsEnabled) return;
+    
+    if (STATE.phase === 2 && !STATE.soundPhase2) {
+        if (STATE.soundPhase1) {
+            STATE.soundPhase1.gainNode.gain.value = 0;
+        }
+        startPhase2Sound();
+    }
+}
+
+function playSound(type) {
+    if (!STATE.soundsEnabled) return;
+    
+    const oscillator = STATE.audioContext.createOscillator();
+    const gainNode = STATE.audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(STATE.audioContext.destination);
+    
+    switch(type) {
+        case 'static':
+            oscillator.type = 'white';
+            oscillator.frequency.value = 800;
+            gainNode.gain.value = 0.2;
+            oscillator.start();
+            oscillator.stop(STATE.audioContext.currentTime + 0.3);
+            break;
+            
+        case 'glitch':
+            oscillator.type = 'square';
+            oscillator.frequency.value = 150 + Math.random() * 300;
+            gainNode.gain.value = 0.25;
+            oscillator.start();
+            oscillator.stop(STATE.audioContext.currentTime + 0.1);
+            break;
+            
+        case 'scare':
+            oscillator.type = 'sawtooth';
+            oscillator.frequency.value = 200;
+            gainNode.gain.value = 0.4;
+            oscillator.start();
+            
+            oscillator.frequency.exponentialRampToValueAtTime(60, STATE.audioContext.currentTime + 2);
+            gainNode.gain.exponentialRampToValueAtTime(0.05, STATE.audioContext.currentTime + 2);
+            
+            oscillator.stop(STATE.audioContext.currentTime + 2);
+            break;
+            
+        case 'victory':
+            const notes = [261.63, 329.63, 392.00, 523.25];
+            let time = STATE.audioContext.currentTime;
+            
+            notes.forEach((freq, i) => {
+                const osc = STATE.audioContext.createOscillator();
+                const gain = STATE.audioContext.createGain();
+                
+                osc.connect(gain);
+                gain.connect(STATE.audioContext.destination);
+                
+                osc.frequency.value = freq;
+                gain.gain.value = 0.1;
+                
+                gain.gain.setValueAtTime(0.1, time);
+                gain.gain.exponentialRampToValueAtTime(0.01, time + 0.5);
+                
+                osc.start(time);
+                osc.stop(time + 0.5);
+                
+                time += 0.3;
+            });
+            break;
+    }
+}
+
+function stopAllSounds() {
+    if (STATE.audioContext) {
+        STATE.audioContext.suspend();
+    }
+}
+
+// ========== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==========
+function updateTimer() {
+    const date = new Date(STATE.displayedTime * 1000);
+    const hours = date.getUTCHours().toString().padStart(2, '0');
+    const minutes = date.getUTCMinutes().toString().padStart(2, '0');
+    const seconds = date.getUTCSeconds().toString().padStart(2, '0');
+    
+    document.getElementById('timer').textContent = `${hours}:${minutes}:${seconds}`;
+}
+
+function updateInterface() {
+    document.getElementById('sanityIndicator').textContent = `РАССУДОК: ${Math.round(STATE.sanity)}%`;
+    document.getElementById('sanityIndicator').style.color = 
+        STATE.sanity > 40 ? '#0f0' : '#f00';
+    
+    if (STATE.realTime % 10 === 0 && STATE.gameActive) {
+        const phrases = STATE.phase === 1 ? CONFIG.PHRASES_PHASE1 : CONFIG.PHRASES_PHASE2;
+        const randomPhrase = phrases[Math.floor(Math.random() * phrases.length)];
+        
+        document.getElementById('mainText').innerHTML = 
+            `МЕТРОНОМИКОН<br><span style="color:#${STATE.phase === 1 ? '0a0' : 'f00'};font-size:18px">${randomPhrase}</span>`;
+    }
+    
+    const progress = (STATE.correctInRow / STATE.requiredStreak) * 100;
+    document.getElementById('streakCounter').textContent = 
+        `СЕРИЯ: ${STATE.currentStreak} (${Math.round(progress)}%)`;
+           // ПРОВЕРКА БАГА: если прогресс > 100%, запускаем читерский экран
+    if (progress > 100 && STATE.gameActive) {
+        triggerCheatDetection();
+    }
+}
+function showCheatDetected() {
+    STATE.gameActive = false;
+    stopAllSounds();
+    
+    // Очищаем весь экран
+    document.body.innerHTML = '';
+    document.body.style.backgroundColor = '#000';
+    document.body.style.overflow = 'hidden';
+    
+    // Создаём эффект сбоя
+    const glitchText = document.createElement('div');
+    glitchText.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-family: 'Courier New', monospace;
+        font-size: 48px;
+        color: #f00;
+        text-align: center;
+        z-index: 10000;
+    `;
+    document.body.appendChild(glitchText);
+    
+    const text = 'ТЫ СЧИТЕРИЛ...';
+    let index = 0;
+    
+    function typeNextLetter() {
+        if (index < text.length) {
+            // Добавляем букву
+            glitchText.textContent = text.substring(0, index + 1);
+            
+            // Страшный звук для каждой буквы
+            playCheatSound();
+            
+            // Случайное движение
+            const x = Math.random() * 100 - 50;
+            const y = Math.random() * 100 - 50;
+            glitchText.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
+            
+            // Случайный цвет
+            const colors = ['#f00', '#0f0', '#00f', '#ff0', '#f0f'];
+            glitchText.style.color = colors[Math.floor(Math.random() * colors.length)];
+            
+            // Случайный размер
+            glitchText.style.fontSize = (40 + Math.random() * 20) + 'px';
+            
+            index++;
+            
+            // Случайная задержка между буквами
+            setTimeout(typeNextLetter, 200 + Math.random() * 300);
+        } else {
+            // После завершения - вечный цикл движения
+            setInterval(() => {
+                const x = Math.random() * 200 - 100;
+                const y = Math.random() * 200 - 100;
+                glitchText.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
+                
+                // Мигание цвета
+                if (Math.random() > 0.5) {
+                    glitchText.style.color = '#f00';
+                } else {
+                    glitchText.style.color = '#0f0';
+                }
+            }, 100);
+        }
+    }
+    
+    function playCheatSound() {
+        if (!STATE.soundsEnabled) return;
+        
+        const oscillator = STATE.audioContext.createOscillator();
+        const gainNode = STATE.audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(STATE.audioContext.destination);
+        
+        oscillator.type = 'square';
+        oscillator.frequency.value = 100 + Math.random() * 500;
+        gainNode.gain.value = 0.3;
+        
+        oscillator.start();
+        oscillator.stop(STATE.audioContext.currentTime + 0.1);
+        
+        // Второй звук для эффекта
+        setTimeout(() => {
+            const osc2 = STATE.audioContext.createOscillator();
+            const gain2 = STATE.audioContext.createGain();
+            
+            osc2.connect(gain2);
+            gain2.connect(STATE.audioContext.destination);
+            
+            osc2.type = 'sawtooth';
+            osc2.frequency.value = 50 + Math.random() * 100;
+            gain2.gain.value = 0.2;
+            
+            osc2.start();
+            osc2.stop(STATE.audioContext.currentTime + 0.05);
+        }, 50);
+    }
+    
+    // Запускаем печать
+    setTimeout(typeNextLetter, 500);
+    
+    // Блокируем всё
+    document.onkeydown = function(e) {
+        e.preventDefault();
+        return false;
+    };
+    
+    document.onclick = function(e) {
+        e.preventDefault();
+        return false;
+    };
+}
+// ========== РЕЖИМ ЧИТЕРА ==========
+function activateCheatMode() {
+    if (cheatMode) return;
+    
+    cheatMode = true;
+    console.log('CHEAT MODE ACTIVATED');
+    
+    // Останавливаем игру
+    STATE.gameActive = false;
+    stopAllSounds();
+    
+    // Скрываем всё
+    document.getElementById('mainUI').style.opacity = '0';
+    
+    // Создаём страшную надпись
+    const cheatScreen = document.createElement('div');
+    cheatScreen.id = 'cheatScreen';
+    cheatScreen.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: #000;
+        z-index: 99999;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    `;
+    
+    const cheatText = document.createElement('div');
+    cheatText.id = 'cheatText';
+    cheatText.style.cssText = `
+        font-size: 48px;
+        color: #f00;
+        text-align: center;
+        font-family: 'Courier New', monospace;
+        letter-spacing: 5px;
+        text-shadow: 0 0 30px #f00;
+        position: relative;
+    `;
+    
+    cheatScreen.appendChild(cheatText);
+    document.body.appendChild(cheatScreen);
+    
+    // Текст появляется по буквам
+    const message = 'ТЫ СЧИТЕРИЛ...';
+    let index = 0;
+    
+    function typeLetter() {
+        if (index < message.length) {
+            cheatText.textContent += message[index];
+            
+            // Страшный звук для каждой буквы
+            playCheatSound();
+            
+            // Случайное движение букв
+            const letters = cheatText.textContent.split('');
+            let newText = '';
+            
+            letters.forEach((letter, i) => {
+                if (i === index) {
+                    // Новая буква появляется со смещением
+                    newText += `<span style="
+                        display: inline-block;
+                        transform: translate(${Math.random()*50-25}px, ${Math.random()*50-25}px) 
+                                   rotate(${Math.random()*30-15}deg);
+                        animation: float${i} 3s infinite alternate;
+                    ">${letter}</span>`;
+                    
+                    // Добавляем уникальную анимацию для каждой буквы
+                    const style = document.createElement('style');
+                    style.textContent = `
+                        @keyframes float${i} {
+                            0% { transform: translate(${Math.random()*40-20}px, ${Math.random()*40-20}px) 
+                                          rotate(${Math.random()*20-10}deg); }
+                            100% { transform: translate(${Math.random()*40-20}px, ${Math.random()*40-20}px) 
+                                            rotate(${Math.random()*20-10}deg); }
+                        }
+                    `;
+                    document.head.appendChild(style);
+                    
+                } else {
+                    // Старые буквы продолжают двигаться
+                    newText += `<span style="
+                        display: inline-block;
+                        animation: float${i} 3s infinite alternate;
+                    ">${letter}</span>`;
+                }
+            });
+            
+            cheatText.innerHTML = newText;
+            index++;
+            
+            // Случайная задержка между буквами
+            setTimeout(typeLetter, 200 + Math.random() * 300);
+        } else {
+            // После полной фразы - усиление эффектов
+            setTimeout(() => {
+                startUltimateHorror();
+            }, 2000);
+        }
+    }
+    
+    // Запускаем печать
+    setTimeout(typeLetter, 1000);
+}
+
+function startUltimateHorror() {
+    const cheatScreen = document.getElementById('cheatScreen');
+    
+    // Меняем цвет фона
+    let colorIndex = 0;
+    const colors = ['#000', '#100', '#200', '#300', '#400', '#500', '#600', '#700'];
+    
+    const colorInterval = setInterval(() => {
+        cheatScreen.style.backgroundColor = colors[colorIndex % colors.length];
+        colorIndex++;
+    }, 500);
+    
+    // Случайные глитч-эффекты
+    setInterval(() => {
+        const glitch = document.createElement('div');
+        glitch.style.cssText = `
+            position: fixed;
+            top: ${Math.random() * 100}%;
+            left: ${Math.random() * 100}%;
+            width: ${50 + Math.random() * 200}px;
+            height: ${3 + Math.random() * 10}px;
+            background: #f00;
+            opacity: ${0.1 + Math.random() * 0.5};
+            transform: rotate(${Math.random() * 360}deg);
+            z-index: 999999;
+            pointer-events: none;
+        `;
+        
+        document.body.appendChild(glitch);
+        
+        setTimeout(() => {
+            if (glitch.parentNode) glitch.parentNode.removeChild(glitch);
+        }, 1000);
+    }, 300);
+    
+    // Бесконечные плавающие буквы
+    setInterval(() => {
+        const floatingLetter = document.createElement('div');
+        floatingLetter.textContent = 'ТЫСЧИТЕРИЛ'[Math.floor(Math.random() * 10)];
+        floatingLetter.style.cssText = `
+            position: fixed;
+            font-size: ${24 + Math.random() * 48}px;
+            color: #f00;
+            opacity: ${0.1 + Math.random() * 0.3};
+            left: ${Math.random() * 100}%;
+            top: ${Math.random() * 100}%;
+            transform: rotate(${Math.random() * 360}deg);
+            pointer-events: none;
+            z-index: 999998;
+            animation: floatRandom ${3 + Math.random() * 7}s infinite linear;
+        `;
+        
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes floatRandom {
+                0% { 
+                    transform: translate(0, 0) rotate(0deg); 
+                    opacity: ${0.1 + Math.random() * 0.3};
+                }
+                50% { 
+                    transform: translate(${Math.random() * 200 - 100}px, ${Math.random() * 200 - 100}px) 
+                             rotate(${180 + Math.random() * 180}deg); 
+                    opacity: ${0.3 + Math.random() * 0.4};
+                }
+                100% { 
+                    transform: translate(${Math.random() * 200 - 100}px, ${Math.random() * 200 - 100}px) 
+                             rotate(${360 + Math.random() * 180}deg); 
+                    opacity: ${0.1 + Math.random() * 0.2};
+                }
+            }
+        `;
+        
+        document.head.appendChild(style);
+        document.body.appendChild(floatingLetter);
+        
+        setTimeout(() => {
+            if (floatingLetter.parentNode) floatingLetter.parentNode.removeChild(floatingLetter);
+        }, 10000);
+    }, 1000);
+    
+    // Звуковая пытка
+    setInterval(() => {
+        playCheatSound();
+    }, 1500);
+    
+    // Невозможность выйти
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' || e.key === 'F5' || (e.ctrlKey && e.key === 'r')) {
+            e.preventDefault();
+            
+            // Наказание за попытку выйти
+            const warning = document.createElement('div');
+            warning.textContent = 'НЕТ ВЫХОДА';
+            warning.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                font-size: 72px;
+                color: #f00;
+                z-index: 9999999;
+                text-shadow: 0 0 50px #f00;
+                opacity: 0;
+                animation: flash 0.5s;
+            `;
+            
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes flash {
+                    0%, 100% { opacity: 0; }
+                    50% { opacity: 1; }
+                }
+            `;
+            
+            document.head.appendChild(style);
+            document.body.appendChild(warning);
+            
+            setTimeout(() => {
+                if (warning.parentNode) warning.parentNode.removeChild(warning);
+            }, 1000);
+        }
+    });
+    
+    // Сообщение в консоль для читеров
+    console.log('%c⚠ ВЫ АКТИВИРОВАЛИ РЕЖИМ ЧИТЕРА ⚠', 'color: #f00; font-size: 20px; font-weight: bold;');
+    console.log('%cСистема заблокирована. Перезагрузите страницу.', 'color: #f00; font-size: 16px;');
+}
+    </script>
+</body>
+</html>
